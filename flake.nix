@@ -19,11 +19,42 @@
             maven
             gradle
             jdt-language-server
+            # JavaFX Dependencies
+            gtk3
+            libGL
+            glib
+            pango
+            cairo
+            atk
+            gdk-pixbuf
+            fontconfig
+            freetype
+            xorg.libX11
+            xorg.libXext
+            xorg.libXxf86vm
+            xorg.libXi
+            xorg.libXtst
           ];
 
           shellHook = ''
             export JAVA_HOME=${pkgs.jdk21}
-            echo "☕ Java devshell ready — JDK 21, Maven, Gradle"
+            export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath (with pkgs; [
+              gtk3
+              glib
+              pango
+              cairo
+              atk
+              gdk-pixbuf
+              fontconfig
+              freetype
+              libGL
+              xorg.libX11
+              xorg.libXext
+              xorg.libXxf86vm
+              xorg.libXi
+              xorg.libXtst
+            ])}:$LD_LIBRARY_PATH"
+            echo "☕ Java devshell ready (with JavaFX support) — JDK 21, Maven, Gradle"
           '';
         };
       });
