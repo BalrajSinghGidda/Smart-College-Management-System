@@ -98,6 +98,15 @@ public class DatabaseManager {
                     "FOREIGN KEY(receiver_id) REFERENCES users(id)" +
                     ")");
 
+            // User Settings
+            stmt.execute("CREATE TABLE IF NOT EXISTS user_settings (" +
+                    "user_id INTEGER PRIMARY KEY," +
+                    "theme TEXT DEFAULT 'LIGHT'," +
+                    "bubble_color TEXT DEFAULT '#e1ffc7'," +
+                    "display_name TEXT," +
+                    "FOREIGN KEY(user_id) REFERENCES users(id)" +
+                    ")");
+
             // Insert default admin if not exists
             stmt.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin123', 'ADMIN')");
             

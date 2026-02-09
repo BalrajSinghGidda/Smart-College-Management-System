@@ -39,24 +39,37 @@ public class FacultyDashboard {
         Button btnEvents = createSidebarButton("Events");
         Button btnChat = createSidebarButton("Global Chat");
         Button btnPrivateChat = createSidebarButton("Private Chat");
+        Button btnSettings = createSidebarButton("Settings");
         Button btnLogout = createSidebarButton("Logout");
 
-        sidebar.getChildren().addAll(brand, new Separator(), btnAttendance, btnMarks, btnTimetable, btnEvents, btnChat, btnPrivateChat, btnLogout);
+        sidebar.getChildren().addAll(brand, new Separator(), btnAttendance, btnMarks, btnTimetable, btnEvents, btnChat, btnPrivateChat, btnSettings, btnLogout);
         root.setLeft(sidebar);
 
+        applyTheme(root);
         showAttendanceManagement(root);
 
         btnAttendance.setOnAction(e -> showAttendanceManagement(root));
         btnMarks.setOnAction(e -> showMarksEntry(root));
         btnTimetable.setOnAction(e -> showTimetable(root));
         btnEvents.setOnAction(e -> showEvents(root));
-        btnChat.setOnAction(e -> AdminDashboard.showChat(root, username));
+        btnChat.setOnAction(e -> AdminDashboard.showChat(root, username, userId));
         btnPrivateChat.setOnAction(e -> root.setCenter(new PrivateChatUI(userId).getView()));
+        btnSettings.setOnAction(e -> root.setCenter(new SettingsUI(userId, () -> applyTheme(root)).getView()));
         btnLogout.setOnAction(e -> new App().start(stage));
 
         Scene scene = new Scene(root, 900, 600);
         stage.setTitle("Faculty Dashboard");
         stage.setScene(scene);
+    }
+
+    private void applyTheme(BorderPane root) {
+        root.getStylesheets().clear();
+        root.getStylesheets().add(getClass().getResource("/com/college/management/css/chat.css").toExternalForm());
+        UserSettings settings = UserSettings.getSettings(userId);
+        root.getStyleClass().remove("dark-theme");
+        if ("DARK".equals(settings.getTheme())) {
+            root.getStyleClass().add("dark-theme");
+        }
     }
 
     private void showTimetable(BorderPane root) {

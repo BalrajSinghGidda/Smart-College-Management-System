@@ -1,11 +1,13 @@
 package com.college.management;
 
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import java.sql.*;
+import java.util.List;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -23,6 +25,7 @@ public class AdminDashboard {
 
     public void show() {
         BorderPane root = new BorderPane();
+        root.getStyleClass().add("dashboard-root");
 
         // Sidebar
         VBox sidebar = new VBox(10);
@@ -40,11 +43,14 @@ public class AdminDashboard {
         Button btnChat = createSidebarButton("Global Chat");
         Button btnPrivateChat = createSidebarButton("Private Chat");
         Button btnReports = createSidebarButton("Reports");
+        Button btnSettings = createSidebarButton("Settings");
         Button btnLogout = createSidebarButton("Logout");
 
-        sidebar.getChildren().addAll(brand, new Separator(), btnUsers, btnNotices, btnTimetable, btnEvents, btnChat, btnPrivateChat, btnReports, btnLogout);
+        sidebar.getChildren().addAll(brand, new Separator(), btnUsers, btnNotices, btnTimetable, btnEvents, btnChat, btnPrivateChat, btnReports, btnSettings, btnLogout);
 
         root.setLeft(sidebar);
+
+        applyTheme(root);
 
         // Default Content
         showUserManagement(root);
@@ -53,14 +59,25 @@ public class AdminDashboard {
         btnNotices.setOnAction(e -> showNoticeManagement(root));
         btnTimetable.setOnAction(e -> showTimetableManagement(root));
         btnEvents.setOnAction(e -> showEventManagement(root));
-        btnChat.setOnAction(e -> showChat(root, "Admin"));
+        btnChat.setOnAction(e -> showChat(root, username, userId));
         btnPrivateChat.setOnAction(e -> root.setCenter(new PrivateChatUI(userId).getView()));
         btnReports.setOnAction(e -> showReports(root));
+        btnSettings.setOnAction(e -> root.setCenter(new SettingsUI(userId, () -> applyTheme(root)).getView()));
         btnLogout.setOnAction(e -> new App().start(stage));
 
         Scene scene = new Scene(root, 900, 600);
         stage.setTitle("Admin Dashboard");
         stage.setScene(scene);
+    }
+
+    private void applyTheme(BorderPane root) {
+        root.getStylesheets().clear();
+        root.getStylesheets().add(getClass().getResource("/com/college/management/css/chat.css").toExternalForm());
+        UserSettings settings = UserSettings.getSettings(userId);
+        root.getStyleClass().remove("dark-theme");
+        if ("DARK".equals(settings.getTheme())) {
+            root.getStyleClass().add("dark-theme");
+        }
     }
 
     private void showTimetableManagement(BorderPane root) {
@@ -127,34 +144,40 @@ public class AdminDashboard {
         root.setCenter(content);
     }
 
-    public static void showChat(BorderPane root, String senderName) {
-        VBox content = new VBox(10);
-        content.setPadding(new Insets(20));
-        Label title = new Label("Global Chat / Announcements");
-        title.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
+    public static void showChat(BorderPane root, String senderName, int viewerId) {
+        VBox mainBox = new VBox();
 
-        TextArea chatArea = new TextArea();
-        chatArea.setEditable(false);
-        chatArea.setPrefHeight(400);
+        Label title = new Label("Global Chat / Announcements");
+        title.setPadding(new Insets(10));
+        title.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
+
+        ScrollPane scrollPane = new ScrollPane();
+        VBox messageContainer = new VBox(15);
+        messageContainer.setPadding(new Insets(20));
+        messageContainer.getStyleClass().add("chat-container");
+        
+        scrollPane.setContent(messageContainer);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setVvalue(1.0);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
 
         HBox inputArea = new HBox(10);
+        inputArea.setPadding(new Insets(10));
+        inputArea.setAlignment(Pos.CENTER);
         TextField txtMsg = new TextField();
+        txtMsg.setPromptText("Type a message...");
         txtMsg.setPrefWidth(500);
         Button btnSend = new Button("Send");
+        btnSend.setStyle("-fx-background-color: #128c7e; -fx-text-fill: white; -fx-font-weight: bold;");
 
         Runnable refreshChat = () -> {
-            try (Connection conn = DatabaseManager.getConnection();
-                 Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery("SELECT sender, content, timestamp FROM messages ORDER BY id ASC")) {
-                StringBuilder sb = new StringBuilder();
-                while (rs.next()) {
-                    sb.append("[").append(rs.getString("timestamp")).append("] ")
-                      .append(rs.getString("sender")).append(": ")
-                      .append(rs.getString("content")).append("\n");
-                }
-                chatArea.setText(sb.toString());
-                chatArea.setScrollTop(Double.MAX_VALUE);
-            } catch (SQLException ex) { ex.printStackTrace(); }
+            messageContainer.getChildren().clear();
+            List<ChatMessage> messages = ChatService.getGlobalMessages();
+            for (ChatMessage msg : messages) {
+                boolean isMine = msg.getSenderName().equals(senderName);
+                messageContainer.getChildren().add(PrivateChatUI.createBubble(msg, isMine, viewerId));
+            }
+            scrollPane.setVvalue(1.0);
         };
 
         btnSend.setOnAction(e -> {
@@ -171,8 +194,8 @@ public class AdminDashboard {
 
         refreshChat.run();
         inputArea.getChildren().addAll(txtMsg, btnSend);
-        content.getChildren().addAll(title, chatArea, inputArea);
-        root.setCenter(content);
+        mainBox.getChildren().addAll(title, scrollPane, inputArea);
+        root.setCenter(mainBox);
     }
 
     private void showReports(BorderPane root) {

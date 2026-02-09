@@ -1,6 +1,7 @@
 package com.college.management;
 
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import java.util.List;
@@ -8,7 +9,8 @@ import java.util.List;
 public class PrivateChatUI {
     private int currentUserId;
     private User selectedUser;
-    private TextArea chatArea;
+    private VBox messageContainer;
+    private ScrollPane scrollPane;
     private ListView<User> userList;
 
     public PrivateChatUI(int currentUserId) {
@@ -17,13 +19,14 @@ public class PrivateChatUI {
 
     public Pane getView() {
         BorderPane layout = new BorderPane();
-
+        
         // Left side: User List
         VBox leftPane = new VBox(10);
         leftPane.setPadding(new Insets(10));
         leftPane.setPrefWidth(200);
+        leftPane.setStyle("-fx-background-color: #ffffff; -fx-border-color: #dcdcdc; -fx-border-width: 0 1 0 0;");
         Label userLbl = new Label("Contacts");
-        userLbl.setStyle("-fx-font-weight: bold;");
+        userLbl.setStyle("-fx-font-weight: bold; -fx-font-size: 16px;");
         
         userList = new ListView<>();
         refreshUserList();
@@ -41,22 +44,35 @@ public class PrivateChatUI {
         layout.setLeft(leftPane);
 
         // Center: Chat Area
-        VBox chatPane = new VBox(10);
-        chatPane.setPadding(new Insets(10));
+        VBox mainChatPane = new VBox();
         
-        chatArea = new TextArea();
-        chatArea.setEditable(false);
-        chatArea.setPrefHeight(400);
-        chatArea.setWrapText(true);
+        scrollPane = new ScrollPane();
+        messageContainer = new VBox(15);
+        messageContainer.setPadding(new Insets(20));
+        messageContainer.getStyleClass().add("chat-container");
+        messageContainer.setPrefWidth(550);
+        
+        scrollPane.setContent(messageContainer);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setVvalue(1.0);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
 
         HBox inputPane = new HBox(10);
+        inputPane.setPadding(new Insets(10));
+        inputPane.setStyle("-fx-background-color: #f0f0f0;");
+        inputPane.setAlignment(Pos.CENTER);
+        
         TextField txtMsg = new TextField();
-        txtMsg.setPrefWidth(400);
+        txtMsg.setPromptText("Type a message...");
+        txtMsg.setPrefWidth(450);
+        txtMsg.setStyle("-fx-background-radius: 20;");
+        
         Button btnSend = new Button("Send");
+        btnSend.setStyle("-fx-background-color: #128c7e; -fx-text-fill: white; -fx-background-radius: 20; -fx-font-weight: bold;");
         inputPane.getChildren().addAll(txtMsg, btnSend);
 
-        chatPane.getChildren().addAll(new Label("Chat Window"), chatArea, inputPane);
-        layout.setCenter(chatPane);
+        mainChatPane.getChildren().addAll(scrollPane, inputPane);
+        layout.setCenter(mainChatPane);
 
         // Logic
         userList.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
@@ -81,16 +97,48 @@ public class PrivateChatUI {
     }
 
     private void refreshMessages() {
-        if (selectedUser == null) {
-            chatArea.setText("Select a contact to start chatting.");
-            return;
+        messageContainer.getChildren().clear();
+        if (selectedUser == null) return;
+
+        List<ChatMessage> history = ChatService.getPrivateConversation(currentUserId, selectedUser.getId());
+        for (ChatMessage msg : history) {
+            boolean isMine = msg.getSenderId() == currentUserId;
+            messageContainer.getChildren().add(createBubble(msg, isMine, currentUserId));
         }
-        List<String> history = ChatService.getPrivateConversation(currentUserId, selectedUser.getId());
-        StringBuilder sb = new StringBuilder();
-        for (String msg : history) {
-            sb.append(msg).append("\n");
+        scrollPane.setVvalue(1.0);
+    }
+
+    public static VBox createBubble(ChatMessage msg, boolean isMine, int viewerId) {
+        VBox bubbleWrapper = new VBox(2);
+        bubbleWrapper.setMaxWidth(Double.MAX_VALUE);
+        bubbleWrapper.setAlignment(isMine ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
+
+        VBox bubble = new VBox(3);
+        bubble.setMaxWidth(350);
+        bubble.getStyleClass().add(isMine ? "chat-bubble-left" : "chat-bubble-right");
+
+        if (isMine) {
+            UserSettings settings = UserSettings.getSettings(viewerId);
+            bubble.setStyle("-fx-bubble-color: " + settings.getBubbleColor() + ";");
+        } else {
+            bubble.setStyle("-fx-bubble-color: #ffffff;");
         }
-        chatArea.setText(sb.toString());
-        chatArea.setScrollTop(Double.MAX_VALUE);
+
+        if (!isMine) {
+            Label sender = new Label(msg.getSenderName());
+            sender.getStyleClass().add("chat-sender");
+            bubble.getChildren().add(sender);
+        }
+
+        Label content = new Label(msg.getContent());
+        content.setWrapText(true);
+        
+        Label time = new Label(msg.getTimestamp());
+        time.getStyleClass().add("chat-time");
+        
+        bubble.getChildren().addAll(content, time);
+        bubbleWrapper.getChildren().add(bubble);
+        
+        return bubbleWrapper;
     }
 }

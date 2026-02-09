@@ -41,25 +41,38 @@ public class StudentDashboard {
         Button btnChat = createSidebarButton("Global Chat");
         Button btnPrivateChat = createSidebarButton("Private Chat");
         Button btnNotices = createSidebarButton("Notices");
+        Button btnSettings = createSidebarButton("Settings");
         Button btnLogout = createSidebarButton("Logout");
 
-        sidebar.getChildren().addAll(brand, nameLbl, new Separator(), btnMarks, btnAttendance, btnTimetable, btnEvents, btnChat, btnPrivateChat, btnNotices, btnLogout);
+        sidebar.getChildren().addAll(brand, nameLbl, new Separator(), btnMarks, btnAttendance, btnTimetable, btnEvents, btnChat, btnPrivateChat, btnNotices, btnSettings, btnLogout);
         root.setLeft(sidebar);
 
+        applyTheme(root);
         showMarks(root);
 
         btnMarks.setOnAction(e -> showMarks(root));
         btnAttendance.setOnAction(e -> showAttendance(root));
         btnTimetable.setOnAction(e -> showTimetable(root));
         btnEvents.setOnAction(e -> showEvents(root));
-        btnChat.setOnAction(e -> AdminDashboard.showChat(root, studentName));
+        btnChat.setOnAction(e -> AdminDashboard.showChat(root, studentName, studentId));
         btnPrivateChat.setOnAction(e -> root.setCenter(new PrivateChatUI(studentId).getView()));
         btnNotices.setOnAction(e -> showNotices(root));
+        btnSettings.setOnAction(e -> root.setCenter(new SettingsUI(studentId, () -> applyTheme(root)).getView()));
         btnLogout.setOnAction(e -> new App().start(stage));
 
         Scene scene = new Scene(root, 900, 600);
         stage.setTitle("Student Dashboard - " + studentName);
         stage.setScene(scene);
+    }
+
+    private void applyTheme(BorderPane root) {
+        root.getStylesheets().clear();
+        root.getStylesheets().add(getClass().getResource("/com/college/management/css/chat.css").toExternalForm());
+        UserSettings settings = UserSettings.getSettings(studentId);
+        root.getStyleClass().remove("dark-theme");
+        if ("DARK".equals(settings.getTheme())) {
+            root.getStyleClass().add("dark-theme");
+        }
     }
 
     private void showTimetable(BorderPane root) {

@@ -17,9 +17,9 @@ public class ChatService {
         } catch (SQLException e) { e.printStackTrace(); }
     }
 
-    public static List<String> getPrivateConversation(int user1, int user2) {
-        List<String> messages = new ArrayList<>();
-        String sql = "SELECT u.username as sender_name, pm.content, pm.timestamp " +
+    public static List<ChatMessage> getPrivateConversation(int user1, int user2) {
+        List<ChatMessage> messages = new ArrayList<>();
+        String sql = "SELECT u.username as sender_name, pm.sender_id, pm.content, pm.timestamp " +
                      "FROM private_messages pm " +
                      "JOIN users u ON pm.sender_id = u.id " +
                      "WHERE (pm.sender_id = ? AND pm.receiver_id = ?) " +
@@ -33,8 +33,25 @@ public class ChatService {
             pstmt.setInt(4, user1);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
-                messages.add("[" + rs.getString("timestamp") + "] " + 
-                             rs.getString("sender_name") + ": " + rs.getString("content"));
+                messages.add(new ChatMessage(
+                    rs.getString("sender_name"),
+                    rs.getInt("sender_id"),
+                    rs.getString("content"),
+                    rs.getString("timestamp")
+                ));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return messages;
+    }
+
+    public static List<ChatMessage> getGlobalMessages() {
+        List<ChatMessage> messages = new ArrayList<>();
+        String sql = "SELECT sender, content, timestamp FROM messages ORDER BY id ASC";
+        try (Connection conn = DatabaseManager.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                messages.add(new ChatMessage(rs.getString("sender"), -1, rs.getString("content"), rs.getString("timestamp")));
             }
         } catch (SQLException e) { e.printStackTrace(); }
         return messages;

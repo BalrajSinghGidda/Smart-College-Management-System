@@ -2,7 +2,9 @@ com/college/management/StudentDashboard.class
 com/college/management/FacultyDashboard.class
 com/college/management/ReportGenerator.class
 com/college/management/PrivateChatUI.class
+com/college/management/SettingsUI.class
 com/college/management/DatabaseManager.class
+com/college/management/UserSettings.class
 com/college/management/AdminDashboard$TableValue.class
 com/college/management/App.class
 com/college/management/PrivateChatUI$1.class
@@ -10,4 +12,5 @@ com/college/management/ChatService.class
 com/college/management/User.class
 com/college/management/FacultyDashboard$TimetableEntry.class
 com/college/management/StudentDashboard$MarkRecord.class
+com/college/management/ChatMessage.class
 com/college/management/AdminDashboard.class
