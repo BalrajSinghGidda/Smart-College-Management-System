@@ -37,12 +37,13 @@ public class FacultyDashboard {
         Button btnMarks = createSidebarButton("Marks Entry");
         Button btnTimetable = createSidebarButton("My Timetable");
         Button btnEvents = createSidebarButton("Events");
+        Button btnNotices = createSidebarButton("Notices");
         Button btnChat = createSidebarButton("Global Chat");
         Button btnPrivateChat = createSidebarButton("Private Chat");
         Button btnSettings = createSidebarButton("Settings");
         Button btnLogout = createSidebarButton("Logout");
 
-        sidebar.getChildren().addAll(brand, new Separator(), btnAttendance, btnMarks, btnTimetable, btnEvents, btnChat, btnPrivateChat, btnSettings, btnLogout);
+        sidebar.getChildren().addAll(brand, new Separator(), btnAttendance, btnMarks, btnTimetable, btnEvents, btnNotices, btnChat, btnPrivateChat, btnSettings, btnLogout);
         root.setLeft(sidebar);
 
         applyTheme(root);
@@ -52,6 +53,7 @@ public class FacultyDashboard {
         btnMarks.setOnAction(e -> showMarksEntry(root));
         btnTimetable.setOnAction(e -> showTimetable(root));
         btnEvents.setOnAction(e -> showEvents(root));
+        btnNotices.setOnAction(e -> showNotices(root));
         btnChat.setOnAction(e -> AdminDashboard.showChat(root, username, userId));
         btnPrivateChat.setOnAction(e -> root.setCenter(new PrivateChatUI(userId).getView()));
         btnSettings.setOnAction(e -> root.setCenter(new SettingsUI(userId, () -> applyTheme(root)).getView()));
@@ -60,6 +62,68 @@ public class FacultyDashboard {
         Scene scene = new Scene(root, 900, 600);
         stage.setTitle("Faculty Dashboard");
         stage.setScene(scene);
+    }
+
+    private void showEvents(BorderPane root) {
+        VBox content = new VBox(15);
+        content.setPadding(new Insets(20));
+        Label title = new Label("College Events");
+        title.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
+
+        ListView<String> listView = new ListView<>();
+        AdminDashboard.loadEventsIntoList(listView);
+
+        Button btnShowForm = new Button("Create New Event");
+        btnShowForm.setStyle("-fx-background-color: #128c7e; -fx-text-fill: white; -fx-font-weight: bold;");
+        
+        btnShowForm.setOnAction(e -> {
+            VBox form = new VBox(10);
+            form.setPadding(new Insets(15));
+            form.setStyle("-fx-border-color: #dcdcdc; -fx-border-radius: 5;");
+            
+            TextField txtTitle = new TextField(); txtTitle.setPromptText("Event Title");
+            DatePicker datePicker = new DatePicker();
+            TextArea txtDesc = new TextArea(); txtDesc.setPromptText("Event Description");
+            
+            HBox actions = new HBox(10);
+            Button btnSave = new Button("Post Event");
+            Button btnCancel = new Button("Cancel");
+            actions.getChildren().addAll(btnSave, btnCancel);
+
+            btnSave.setOnAction(ev -> {
+                if (txtTitle.getText().isEmpty() || datePicker.getValue() == null) return;
+                try (Connection conn = DatabaseManager.getConnection();
+                     PreparedStatement pstmt = conn.prepareStatement("INSERT INTO events (title, description, event_date) VALUES (?, ?, ?)")) {
+                    pstmt.setString(1, txtTitle.getText());
+                    pstmt.setString(2, txtDesc.getText());
+                    pstmt.setString(3, datePicker.getValue().toString());
+                    pstmt.executeUpdate();
+                    new Alert(Alert.AlertType.INFORMATION, "Event added!").show();
+                    showEvents(root);
+                } catch (SQLException ex) { ex.printStackTrace(); }
+            });
+
+            btnCancel.setOnAction(ev -> content.getChildren().remove(form));
+
+            form.getChildren().addAll(new Label("New Event Details"), txtTitle, datePicker, txtDesc, actions);
+            content.getChildren().add(form);
+        });
+
+        content.getChildren().addAll(title, listView, btnShowForm);
+        root.setCenter(content);
+    }
+
+    private void showNotices(BorderPane root) {
+        VBox content = new VBox(15);
+        content.setPadding(new Insets(20));
+        Label title = new Label("College Notices");
+        title.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
+
+        ListView<String> listView = new ListView<>();
+        AdminDashboard.loadNoticesIntoList(listView);
+
+        content.getChildren().addAll(title, listView);
+        root.setCenter(content);
     }
 
     private void applyTheme(BorderPane root) {
@@ -83,25 +147,6 @@ public class FacultyDashboard {
         loadTimetable(table);
 
         content.getChildren().addAll(title, table);
-        root.setCenter(content);
-    }
-
-    private void showEvents(BorderPane root) {
-        VBox content = new VBox(15);
-        content.setPadding(new Insets(20));
-        Label title = new Label("Upcoming Events");
-        title.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
-
-        ListView<String> listView = new ListView<>();
-        try (Connection conn = DatabaseManager.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT title, description, event_date FROM events ORDER BY event_date ASC")) {
-            while (rs.next()) {
-                listView.getItems().add(rs.getString("event_date") + " - " + rs.getString("title") + "\n" + rs.getString("description"));
-            }
-        } catch (SQLException e) { e.printStackTrace(); }
-
-        content.getChildren().addAll(title, listView);
         root.setCenter(content);
     }
 

@@ -120,13 +120,7 @@ public class StudentDashboard {
         title.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
 
         ListView<String> listView = new ListView<>();
-        try (Connection conn = DatabaseManager.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT title, description, event_date FROM events ORDER BY event_date ASC")) {
-            while (rs.next()) {
-                listView.getItems().add(rs.getString("event_date") + " - " + rs.getString("title") + "\n" + rs.getString("description"));
-            }
-        } catch (SQLException e) { e.printStackTrace(); }
+        AdminDashboard.loadEventsIntoList(listView);
 
         content.getChildren().addAll(title, listView);
         root.setCenter(content);
@@ -199,13 +193,7 @@ public class StudentDashboard {
         title.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
 
         ListView<String> listView = new ListView<>();
-        try (Connection conn = DatabaseManager.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT title, content, date FROM notices ORDER BY id DESC")) {
-            while (rs.next()) {
-                listView.getItems().add(rs.getString("date") + " - " + rs.getString("title") + "\n" + rs.getString("content"));
-            }
-        } catch (SQLException e) { e.printStackTrace(); }
+        AdminDashboard.loadNoticesIntoList(listView);
 
         content.getChildren().addAll(title, listView);
         root.setCenter(content);

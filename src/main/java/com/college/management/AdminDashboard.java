@@ -118,29 +118,63 @@ public class AdminDashboard {
         root.setCenter(content);
     }
 
+    public static void loadEventsIntoList(ListView<String> listView) {
+        try (Connection conn = DatabaseManager.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT title, description, event_date FROM events ORDER BY event_date ASC")) {
+            while (rs.next()) {
+                listView.getItems().add(rs.getString("event_date") + " - " + rs.getString("title") + "\n" + rs.getString("description"));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
     private void showEventManagement(BorderPane root) {
         VBox content = new VBox(15);
         content.setPadding(new Insets(20));
-        Label title = new Label("Manage Events");
+        Label title = new Label("College Events");
         title.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
 
-        TextField txtTitle = new TextField(); txtTitle.setPromptText("Event Title");
-        DatePicker datePicker = new DatePicker();
-        TextArea txtDesc = new TextArea(); txtDesc.setPromptText("Event Description");
-        Button btnAdd = new Button("Add Event");
+        ListView<String> listView = new ListView<>();
+        loadEventsIntoList(listView);
 
-        btnAdd.setOnAction(e -> {
-            try (Connection conn = DatabaseManager.getConnection();
-                 PreparedStatement pstmt = conn.prepareStatement("INSERT INTO events (title, description, event_date) VALUES (?, ?, ?)")) {
-                pstmt.setString(1, txtTitle.getText());
-                pstmt.setString(2, txtDesc.getText());
-                pstmt.setString(3, datePicker.getValue().toString());
-                pstmt.executeUpdate();
-                new Alert(Alert.AlertType.INFORMATION, "Event added!").show();
-            } catch (SQLException ex) { ex.printStackTrace(); }
+        Button btnShowForm = new Button("Create New Event");
+        btnShowForm.setStyle("-fx-background-color: #128c7e; -fx-text-fill: white; -fx-font-weight: bold;");
+        
+        btnShowForm.setOnAction(e -> {
+            // Creation Form
+            VBox form = new VBox(10);
+            form.setPadding(new Insets(10));
+            form.setStyle("-fx-border-color: #dcdcdc; -fx-border-radius: 5; -fx-padding: 15;");
+            
+            TextField txtTitle = new TextField(); txtTitle.setPromptText("Event Title");
+            DatePicker datePicker = new DatePicker();
+            TextArea txtDesc = new TextArea(); txtDesc.setPromptText("Event Description");
+            
+            HBox actions = new HBox(10);
+            Button btnSave = new Button("Post Event");
+            Button btnCancel = new Button("Cancel");
+            actions.getChildren().addAll(btnSave, btnCancel);
+
+            btnSave.setOnAction(ev -> {
+                if (txtTitle.getText().isEmpty() || datePicker.getValue() == null) return;
+                try (Connection conn = DatabaseManager.getConnection();
+                     PreparedStatement pstmt = conn.prepareStatement("INSERT INTO events (title, description, event_date) VALUES (?, ?, ?)")) {
+                    pstmt.setString(1, txtTitle.getText());
+                    pstmt.setString(2, txtDesc.getText());
+                    pstmt.setString(3, datePicker.getValue().toString());
+                    pstmt.executeUpdate();
+                    new Alert(Alert.AlertType.INFORMATION, "Event added!").show();
+                    showEventManagement(root); // Refresh view
+                } catch (SQLException ex) { ex.printStackTrace(); }
+            });
+
+            btnCancel.setOnAction(ev -> content.getChildren().remove(form));
+
+            form.getChildren().addAll(new Label("New Event Details"), txtTitle, datePicker, txtDesc, actions);
+            content.getChildren().add(form);
         });
 
-        content.getChildren().addAll(title, txtTitle, datePicker, txtDesc, btnAdd);
+        content.getChildren().addAll(title, listView, btnShowForm);
         root.setCenter(content);
     }
 
@@ -226,6 +260,42 @@ public class AdminDashboard {
         root.setCenter(content);
     }
 
+    public static void loadNoticesIntoList(ListView<String> listView) {
+        try (Connection conn = DatabaseManager.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(
+                     "SELECT n.title, n.content, n.date, u.role " +
+                     "FROM notices n " +
+                     "LEFT JOIN users u ON n.posted_by = u.id " +
+                     "ORDER BY n.id DESC")) {
+            while (rs.next()) {
+                String role = rs.getString("role");
+                String prefix = "ADMIN".equals(role) ? "[PRIORITY] " : "";
+                String notice = prefix + rs.getString("date") + " - " + rs.getString("title") + "\n" + rs.getString("content");
+                listView.getItems().add(notice);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        
+        // Custom cell factory for highlighting
+        listView.setCellFactory(lv -> new ListCell<String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(item);
+                    if (item.startsWith("[PRIORITY]")) {
+                        setStyle("-fx-font-weight: bold; -fx-text-fill: #d32f2f;"); // Red bold for priority
+                    } else {
+                        setStyle("");
+                    }
+                }
+            }
+        });
+    }
+
     private void showNoticeManagement(BorderPane root) {
         VBox content = new VBox(15);
         content.setPadding(new Insets(20));
@@ -242,10 +312,11 @@ public class AdminDashboard {
         btnPost.setOnAction(e -> {
             if (txtTitle.getText().isEmpty() || txtContent.getText().isEmpty()) return;
             try (Connection conn = DatabaseManager.getConnection();
-                 PreparedStatement pstmt = conn.prepareStatement("INSERT INTO notices (title, content, date) VALUES (?, ?, ?)")) {
+                 PreparedStatement pstmt = conn.prepareStatement("INSERT INTO notices (title, content, date, posted_by) VALUES (?, ?, ?, ?)")) {
                 pstmt.setString(1, txtTitle.getText());
                 pstmt.setString(2, txtContent.getText());
                 pstmt.setString(3, java.time.LocalDate.now().toString());
+                pstmt.setInt(4, userId);
                 pstmt.executeUpdate();
                 txtTitle.clear();
                 txtContent.clear();
