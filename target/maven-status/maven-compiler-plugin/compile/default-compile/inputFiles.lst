@@ -1,12 +1,12 @@
-/home/balraj/Work/Smart College Management System/src/main/java/com/college/management/DatabaseManager.java
-/home/balraj/Work/Smart College Management System/src/main/java/com/college/management/SettingsUI.java
-/home/balraj/Work/Smart College Management System/src/main/java/com/college/management/ChatMessage.java
-/home/balraj/Work/Smart College Management System/src/main/java/com/college/management/App.java
-/home/balraj/Work/Smart College Management System/src/main/java/com/college/management/ChatService.java
-/home/balraj/Work/Smart College Management System/src/main/java/com/college/management/ReportGenerator.java
-/home/balraj/Work/Smart College Management System/src/main/java/com/college/management/PrivateChatUI.java
-/home/balraj/Work/Smart College Management System/src/main/java/com/college/management/UserSettings.java
-/home/balraj/Work/Smart College Management System/src/main/java/com/college/management/AdminDashboard.java
-/home/balraj/Work/Smart College Management System/src/main/java/com/college/management/FacultyDashboard.java
-/home/balraj/Work/Smart College Management System/src/main/java/com/college/management/StudentDashboard.java
-/home/balraj/Work/Smart College Management System/src/main/java/com/college/management/User.java
+/Users/balraj/Smart-College-Management-System/src/main/java/com/college/management/ChatService.java
+/Users/balraj/Smart-College-Management-System/src/main/java/com/college/management/ReportGenerator.java
+/Users/balraj/Smart-College-Management-System/src/main/java/com/college/management/User.java
+/Users/balraj/Smart-College-Management-System/src/main/java/com/college/management/DatabaseManager.java
+/Users/balraj/Smart-College-Management-System/src/main/java/com/college/management/UserSettings.java
+/Users/balraj/Smart-College-Management-System/src/main/java/com/college/management/FacultyDashboard.java
+/Users/balraj/Smart-College-Management-System/src/main/java/com/college/management/ChatMessage.java
+/Users/balraj/Smart-College-Management-System/src/main/java/com/college/management/PrivateChatUI.java
+/Users/balraj/Smart-College-Management-System/src/main/java/com/college/management/StudentDashboard.java
+/Users/balraj/Smart-College-Management-System/src/main/java/com/college/management/SettingsUI.java
+/Users/balraj/Smart-College-Management-System/src/main/java/com/college/management/App.java
+/Users/balraj/Smart-College-Management-System/src/main/java/com/college/management/AdminDashboard.java

@@ -10,7 +10,7 @@ Build examples:
 
 ### Maven
 ```
-mvn package
+mvn package (Eg: mvn javafx:run)
 ```
 
 ### Gradle

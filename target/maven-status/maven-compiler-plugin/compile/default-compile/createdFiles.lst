@@ -6,8 +6,8 @@ com/college/management/SettingsUI.class
 com/college/management/DatabaseManager.class
 com/college/management/UserSettings.class
 com/college/management/AdminDashboard$TableValue.class
-com/college/management/App.class
 com/college/management/PrivateChatUI$1.class
+com/college/management/App.class
 com/college/management/ChatService.class
 com/college/management/User.class
 com/college/management/AdminDashboard$1.class
